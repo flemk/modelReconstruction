@@ -1,5 +1,5 @@
 # Model Reconstruction
-this repository provides advanced utility to analyze n-dimaneional systems and reconstruct them from its time series.
+this repository provides advanced utility to analyze n-dimensional systems and reconstruct them from its time series.
 
 # ```reconstructionutils.py```
 use this library to create reconstructed models from your time series. simply type:
@@ -17,8 +17,10 @@ system = ru.Model(series, 6)
 res = ecg.evaluate()
 ```
 
-# ```stynpy.py```
+# ```stanpy.py```
 view [flemk/ModelReconstruction](github.com/flemk/ModelReconstruction) for further details on usage of this module.
+
+tba.
 
 # ```cutility.py```
 math's helper function are stored in this module.
