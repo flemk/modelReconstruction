@@ -14,7 +14,7 @@ series = [z_1, z_2, ..., z_n]
 system = ru.Model(series, 6)
 
 # create a model and reconstruct your system
-res = ecg.evaluate()
+res = system.evaluate()
 ```
 
 # ```stanpy.py```
