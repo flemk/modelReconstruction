@@ -51,9 +51,6 @@ class Model:
                     y = self.series[k]
                     tmp *= y ** (polynominal_exponents[k][j] + polynominal_exponents[k][i])
                 a[i][j] *= np.sum(tmp)
-                #a[i][j] *= np.sum(self.series[0] ** (polynominal_exponents[0][j] + polynominal_exponents[0][i]) * \
-                #                  self.series[1] ** (polynominal_exponents[1][j] + polynominal_exponents[1][i]) * \
-                #                  self.series[2] ** (polynominal_exponents[2][j] + polynominal_exponents[2][i]))
 
         b = np.ones((len_polynominal, 1))
         for i in range(len_polynominal):
@@ -62,9 +59,6 @@ class Model:
                 y = self.series[k]
                 tmp *= y ** polynominal_exponents[k][i]
             b[i] *= np.sum(z * tmp)
-            #b[i] *= np.sum(z * self.series[0] ** polynominal_exponents[0][i] * \
-            #                   self.series[1] ** polynominal_exponents[1][i] * \
-            #                   self.series[2] ** polynominal_exponents[2][i])
 
         return np.linalg.solve(a, b)
 
@@ -85,9 +79,6 @@ class Model:
                 for k in range(self.dimension):
                     tmp *= y[k] ** y_poly[k][i]
                 res += p[i] * tmp
-                #res += p[i] * y[0] ** y_poly[0][i] * \
-                #              y[1] ** y_poly[1][i] * \
-                #              y[2] ** y_poly[2][i]
 
             return res
 
