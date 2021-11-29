@@ -14,21 +14,34 @@ Franz Ludwig Kostelezky, 2021
 import numpy as np
 import matplotlib.pyplot as plt
 import cutility as cu
-from scipy.integrate import solve_ivp
+from scipy.integrate import odeint, solve_ivp
 
 class Model:
-    def __init__(self, series: list, grade: int) -> None:
+    def __init__(self, series: list, grade: int, derivate: list=None) -> None:
         '''
         parametes:
             - <nd-array> series: each element in this array 
                 represents one of system's channel time series
             - <int> grade: highest grade for the fit-polynominals
+            - <nd-array> derivate: each element in this is a derivate for the
+                corresponding element in series
         '''
         #assert(np.shape(series) == (*, ), 'unexpected series shape, expected (*, )')
+
         for el in series:
             assert(len(el) == len(series[0]))
-
         self.series = series
+        
+        if derivate is not None:
+            for el in derivate:
+                assert(len(el) == len(derivate[0]))
+            self.derivate = derivate
+        else:
+            self.derivate = []
+            for el in self.series:
+                self.derivate.append(
+                    cu.first_order_upwind(el)) # TODO make derivate option selectable
+        
         self.dimension = len(series)
         self.grade = grade
         self.fit_coefficients = []
@@ -49,12 +62,12 @@ class Model:
                 tmp = np.ones(np.shape(self.series[0]))
                 for k in range(self.dimension):
                     y = self.series[k]
-                    tmp *= y ** (polynominal_exponents[k][j] + polynominal_exponents[k][i])
+                    tmp *= y ** (polynominal_exponents[k][j] + polynominal_exponents[k][i])  # weighting function here
                 a[i][j] *= np.sum(tmp)
 
         b = np.ones((len_polynominal, 1))
         for i in range(len_polynominal):
-            tmp = np.ones(np.shape(self.series[0]))
+            tmp = np.ones(np.shape(self.series[0]))  # weighting function here
             for k in range(self.dimension):
                 y = self.series[k]
                 tmp *= y ** polynominal_exponents[k][i]
@@ -90,8 +103,8 @@ class Model:
         if len(self.fit_coefficients) > 0:
             print('fit coefficients already set ...replacing with new one')
             self.fit_coefficients = []
-        for el in self.series:
-            p = self._retrieve_fit_coefficients(cu.five_point_derivate_periodic(el))
+        for el in self.derivate:
+            p = self._retrieve_fit_coefficients(el) #TODO 
             self.fit_coefficients.append(p)
 
         if len(self.fit_functions) > 0:
@@ -127,20 +140,29 @@ class Model:
             for el in self.series:
                 ivp.append(el[0])
 
-        sol = solve_ivp(self.model, [0, T], ivp, dense_output=True, args=[self.fit_functions])
-
+        #sol = solve_ivp(self.model, [0, T], ivp, dense_output=True, args=[self.fit_functions])
+        f = 1024  # TODO make factor f selectable as param
+        t = np.linspace(0, T, T * f)
+        sol, infodict = odeint(self.model, ivp, t, args=(self.fit_functions,), tfirst=True, full_output=True, printmessg=True)
+        
         self.solution = sol
 
     def _evaluate_solution(self, t=None):
         '''
         '''
-        if t is None:
-            T = len(self.series[0])
-            t = np.linspace(0, T, T * 2)
+        # since using odeint, self.solution has no attribute sol
+        # TODO make evaluate solution variable, i.e. possibility to change the time interval
+        # /w t in _solve_model
         
-        series_solution = self.solution.sol(t)
+        #if t is None:
+        #    T = len(self.series[0])
+        #    t = np.linspace(0, T, T * 2)
+        #
+        #series_solution = self.solution.sol(t)
 
-        return series_solution
+        #return series_solution
+
+        return self.solution
 
     def evaluate(self, length=None, ivp=None, t=None):
         '''
