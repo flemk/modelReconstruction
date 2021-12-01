@@ -17,7 +17,7 @@ import cutility as cu
 from scipy.integrate import odeint, solve_ivp
 
 class Model:
-    def __init__(self, series: list, grade: int, derivate: list=None) -> None:
+    def __init__(self, series: list, grade: int, derivate: list=None, weighting:list=None) -> None:
         '''
         parametes:
             - <nd-array> series: each element in this array 
@@ -25,6 +25,7 @@ class Model:
             - <int> grade: highest grade for the fit-polynominals
             - <nd-array> derivate: each element in this is a derivate for the
                 corresponding element in series
+            - <nd-array> weighting: weighting for each element used in ls fit
         '''
         #assert(np.shape(series) == (*, ), 'unexpected series shape, expected (*, )')
 
@@ -41,6 +42,14 @@ class Model:
             for el in self.series:
                 self.derivate.append(
                     cu.first_order_upwind(el)) # TODO make derivate option selectable
+
+        if weighting is not None:  # setting weighting function
+            assert(len(weighting) == len(series[0]))
+            self.weighting = np.asarray(weighting)
+        else:
+            # if no weighting function is defined, the weight will be 1:
+            # the series stay the same, multiplied by 1.
+            self.weighting = np.ones(np.shape(self.series[0]))
         
         self.dimension = len(series)
         self.grade = grade
@@ -62,17 +71,19 @@ class Model:
                 tmp = np.ones(np.shape(self.series[0]))
                 for k in range(self.dimension):
                     y = self.series[k]
-                    tmp *= y ** (polynominal_exponents[k][j] + polynominal_exponents[k][i])  # weighting function here
+                    tmp *= y ** (polynominal_exponents[k][j] + polynominal_exponents[k][i])
+                tmp *= self.weighting  # DEBUG: weighting here
                 a[i][j] *= np.sum(tmp)
 
         b = np.ones((len_polynominal, 1))
         for i in range(len_polynominal):
-            tmp = np.ones(np.shape(self.series[0]))  # weighting function here
+            tmp = np.ones(np.shape(self.series[0]))
             for k in range(self.dimension):
                 y = self.series[k]
                 tmp *= y ** polynominal_exponents[k][i]
+            tmp *= self.weighting  # DEBUG: weighting here
             b[i] *= np.sum(z * tmp)
-
+            
         return np.linalg.solve(a, b)
 
     def _convert_fit_coefficients_to_function(self, p):
@@ -136,6 +147,7 @@ class Model:
             T = length
 
         if ivp is None:
+            print('no initial values defined.')
             ivp = []
             for el in self.series:
                 ivp.append(el[0])
