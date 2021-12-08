@@ -34,13 +34,13 @@ def finite_difference_derivate_9_point(series):
     
     return derivate
 
-def second_order_upwind(series):
+def second_order_upwind(series, dx=1):
     '''Returns the 1D second order upwind derivate of a one dimensional
     time series using reflecting boundary conditions.
     '''
 
     series = np.array(series)
-    dx = 1
+    #dx = 1
     d_pos = (- 3 * series \
              + 4 * np.roll(series, shift=-1, axis=0) \
              - np.roll(series, shift=-2, axis=0)
@@ -54,11 +54,11 @@ def second_order_upwind(series):
 
     return derivate
 
-def first_order_upwind(series):
+def first_order_upwind(series, dx=1):
     ''' first order upwind first order 1d derivate
     '''
     series = np.array(series)
-    dx = 1
+    #dx = 1
     
     d_pos = (series - np.roll(series, shift=1, axis=0)) / dx
     d_neg = (np.roll(series, shift=-1, axis=0) - series) / dx
@@ -68,11 +68,11 @@ def first_order_upwind(series):
     
     return derivate
 
-def third_order_upwind(series):
+def third_order_upwind(series, dx=1):
     ''' third order upwind third order 1d derivate
     '''
     series = np.array(series)
-    dx = 1
+    #dx = 1
     
     d_pos = (- 2 * np.roll(series, shift=1, axis=0) \
              - 3 * series \
@@ -111,4 +111,33 @@ def polynominal(dimension, grade):
     # convert to full numpy array
     tmp_ = np.asarray([np.asarray(el) for el in tmp_])
     
-    return np.append(polynominal(dimension, grade - 1), tmp_.T, axis=1)
+    return np.append(_polynominal(dimension, grade - 1), tmp_.T, axis=1)
+
+def _polynominal(dimension, grade):
+    ''' This function is obsolete. it was used to verify polynominal.
+    '''
+    if dimension != 3:
+        return polynominal(dimension, grade)
+    
+    assert(dimension == 3)
+    assert(grade <= 4)
+    print('using 3d static - warning: obsolete')
+
+    if grade == 1:
+        r = [[1., 0., 0.],
+             [0., 1., 0.],
+             [0., 0., 1.]]
+    if grade == 2:  #   v
+        r = [[1., 0., 0., 2., 1., 1., 0., 0., 0.],
+             [0., 1., 0., 0., 1., 0., 2., 0., 1.],
+             [0., 0., 1., 0., 0., 1., 0., 2., 1.]]
+    if grade == 3:  #                           v
+        r = [[1., 0., 0., 2., 1., 1., 0., 0., 0., 3., 2., 2., 1., 1., 1., 0., 0., 0., 0.],
+             [0., 1., 0., 0., 1., 0., 2., 0., 1., 0., 1., 0., 2., 0., 1., 3., 0., 1., 2.],
+             [0., 0., 1., 0., 0., 1., 0., 2., 1., 0., 0., 1., 0., 2., 1., 0., 3., 2., 1.]]
+    if grade == 4:  #                                                                   v
+        r = [[1., 0., 0., 2., 1., 1., 0., 0., 0., 3., 2., 2., 1., 1., 1., 0., 0., 0., 0., 4., 3., 3., 2., 2., 2., 1., 1., 1., 1., 0., 0., 0., 0., 0.],
+             [0., 1., 0., 0., 1., 0., 2., 0., 1., 0., 1., 0., 2., 0., 1., 3., 0., 1., 2., 0., 1., 0., 2., 0., 1., 3., 0., 2., 1., 3., 1., 2., 4., 0.],
+             [0., 0., 1., 0., 0., 1., 0., 2., 1., 0., 0., 1., 0., 2., 1., 0., 3., 2., 1., 0., 0., 1., 0., 2., 1., 0., 3., 1., 2., 1., 3., 2., 0., 4.]]
+    
+    return np.asarray(r)

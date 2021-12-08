@@ -17,7 +17,7 @@ import cutility as cu
 from scipy.integrate import odeint, solve_ivp
 
 class Model:
-    def __init__(self, series: list, grade: int, derivate: list=None, weighting:list=None) -> None:
+    def __init__(self, series: list, grade: int, derivate: list=None, weighting:list=None, dx:float=1) -> None:
         '''
         parametes:
             - <nd-array> series: each element in this array 
@@ -41,7 +41,7 @@ class Model:
             self.derivate = []
             for el in self.series:
                 self.derivate.append(
-                    cu.first_order_upwind(el)) # TODO make derivate option selectable
+                    cu.first_order_upwind(el, dx)) # TODO make derivate option selectable
 
         if weighting is not None:  # setting weighting function
             assert(len(weighting) == len(series[0]))
@@ -53,6 +53,7 @@ class Model:
         
         self.dimension = len(series)
         self.grade = grade
+        self.dx = dx
         self.fit_coefficients = []
         self.fit_functions = []
 
@@ -60,7 +61,7 @@ class Model:
         '''
         parameters:
             - <1d-array> z: target time series to be fitted to
-        '''   
+        '''
         polynominal_exponents = cu.polynominal(self.dimension, self.grade)
     
         len_polynominal = len(polynominal_exponents[0])
