@@ -11,13 +11,14 @@ ode's. n-dimensional system will be expressed as:
 Franz Ludwig Kostelezky, 2021
 '''
 
+from types import LambdaType
 import numpy as np
 import matplotlib.pyplot as plt
 import cutility as cu
 from scipy.integrate import odeint, solve_ivp
 
 class Model:
-    def __init__(self, series: list, grade: int, derivate: list=None, weighting:list=None, dx:float=1) -> None:
+    def __init__(self, series: list, grade: int, derivate: list=None, weighting:list=None, dx:float=1, derivate_method='first_order_upwind') -> None:
         '''
         parametes:
             - <nd-array> series: each element in this array 
@@ -38,10 +39,24 @@ class Model:
                 assert(len(el) == len(derivate[0]))
             self.derivate = derivate
         else:
+            # check whether a specific derivate option is set
+            # a custom derivate method can be set and given as function parameter
+            # it must be of signature (series_as_array, dx)
+            assert(callable(derivate_method) or type(derivate_method) == str)
+            if type(derivate_method) == str:
+                if derivate_method == 'first_order_upwind':
+                    derivate_method = cu.first_order_upwind
+                if derivate_method == 'second_order_upwind':
+                    derivate_method = cu.second_order_upwind
+                if derivate_method == 'third_order_upwind':
+                    derivate_method = cu.third_order_upwind
+                if derivate_method == 'finite_difference_derivate_5_point':
+                    derivate_method == cu.finite_difference_derivate_5_point
+
             self.derivate = []
             for el in self.series:
                 self.derivate.append(
-                    cu.first_order_upwind(el, dx)) # TODO make derivate option selectable
+                    derivate_method(el, dx))  # TODO DEBUG dx, what if not 1??
 
         if weighting is not None:  # setting weighting function
             assert(len(weighting) == len(series[0]))
@@ -73,7 +88,7 @@ class Model:
                 for k in range(self.dimension):
                     y = self.series[k]
                     tmp *= y ** (polynominal_exponents[k][j] + polynominal_exponents[k][i])
-                tmp *= self.weighting  # DEBUG: weighting here
+                tmp *= self.weighting  # weighting is used here
                 a[i][j] *= np.sum(tmp)
 
         b = np.ones((len_polynominal, 1))
@@ -82,7 +97,7 @@ class Model:
             for k in range(self.dimension):
                 y = self.series[k]
                 tmp *= y ** polynominal_exponents[k][i]
-            tmp *= self.weighting  # DEBUG: weighting here
+            tmp *= self.weighting  # weighting is used here
             b[i] *= np.sum(z * tmp)
             
         return np.linalg.solve(a, b)
@@ -116,7 +131,7 @@ class Model:
             print('fit coefficients already set ...replacing with new one')
             self.fit_coefficients = []
         for el in self.derivate:
-            p = self._retrieve_fit_coefficients(el) #TODO 
+            p = self._retrieve_fit_coefficients(el)
             self.fit_coefficients.append(p)
 
         if len(self.fit_functions) > 0:
@@ -139,7 +154,7 @@ class Model:
         
         self.model = func
 
-    def _solve_model(self, length=None, ivp=None):
+    def _reconstruct_from_model(self, length=None, ivp=None, t=None, resolution=1024):
         '''
         '''
         if length is None:
@@ -153,34 +168,17 @@ class Model:
             for el in self.series:
                 ivp.append(el[0])
 
-        #sol = solve_ivp(self.model, [0, T], ivp, dense_output=True, args=[self.fit_functions])
-        f = 1024  # TODO make factor f selectable as param
-        t = np.linspace(0, T, T * f)
+        if t is None:
+            t = np.linspace(0, T, T * resolution)  # param resolution is not selectable by default
+
         sol, infodict = odeint(self.model, ivp, t, args=(self.fit_functions,), tfirst=True, full_output=True, printmessg=True)
         
         self.solution = sol
 
-    def _evaluate_solution(self, t=None):
-        '''
-        '''
-        # since using odeint, self.solution has no attribute sol
-        # TODO make evaluate solution variable, i.e. possibility to change the time interval
-        # /w t in _solve_model
-        
-        #if t is None:
-        #    T = len(self.series[0])
-        #    t = np.linspace(0, T, T * 2)
-        #
-        #series_solution = self.solution.sol(t)
-
-        #return series_solution
-
-        return self.solution
-
-    def evaluate(self, length=None, ivp=None, t=None):
+    def evaluate(self, length=None, ivp=None, t=None, resolution=1024):
         '''
         '''
         self._create_model()
-        self._solve_model(length=length, ivp=ivp)
+        self._reconstruct_from_model(length=length, ivp=ivp, t=t, resolution=resolution)
 
-        return self._evaluate_solution(t=t)
+        return self.solution
