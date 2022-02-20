@@ -1,8 +1,8 @@
 # Model Reconstruction
-this repository provides advanced utility to analyze n-dimensional systems and reconstruct them from its time series.
+This repository provides advanced utility to analyze n-dimensional systems and reconstruct them from its time series.
 
 # ```reconstructionutils.py```
-use this library to create reconstructed models from your time series. simply type:
+Use this library to create reconstructed models from your time series. simply type:
 
 ```python
 import reconstructionutils as ru
@@ -17,10 +17,36 @@ system = ru.Model(series, 6)
 res = system.evaluate()
 ```
 
-# ```stanpy.py```
-view [flemk/ModelReconstruction](github.com/flemk/ModelReconstruction) for further details on usage of this module.
+TODO:
+- [ ] take the mean as defined in arithmetic mean in ```reconstructionutils.Model._retrieve_fit_coefficients```
+- [ ] using ```np.gradient``` for derivative in ```reconstructionutils.Model.__init__```
 
-tba.
+# ```stanpy.py```
+View [flemk/ModelReconstruction](github.com/flemk/StochasticAnalysis) for  examples using this module.
+
+This module provides a class to determine drift- and diffusion-coefficients of n-dimensional time series by using their statistical definition.
+
+```python
+import stanpy as sp
+
+time_series = [[1, 2, ...], [1, 2, ...]] # your time seres you want to analyze
+
+analysis = sp.StochasticAnalysis(time_series)
+analysis.analyze()
+
+# drift and diffusion coefficients are now stored in:
+analysis.drift()
+analysis.diffusion()
+
+# in the 2d case you can visualize them builtin:
+analysis.visualize_2d()
+
+# and you can reconstruct your series with choosen initial values:
+r = analysis.reconstruct()
+
+# by converting your coefficients into a FPE you might gain more insight:
+f = analysis.solve_fpe()
+```
 
 # ```cutility.py```
-math's helper function are stored in this module.
+Math's helper function are stored in this module. Featuring finite differences and upwind schemes as well as mulitdimensional polynominal exponents.
